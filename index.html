@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>拾光集 · 记录生活的美好</title>
+<style>
+/* fonts loaded via link tag in head */
+:root{--c-primary:#ff8fa3;--c-primary-light:#ffb7c5;--c-accent:#c8b6ff;--c-mint:#b8e0d2;--c-sky:#a2d2ff;--c-peach:#ffd6a5;--c-bg:#fffaf5;--c-card:#fff;--c-text:#3a3a3a;--c-sub:#999;--c-border:#f0ebe6;--shadow:0 4px 20px rgba(0,0,0,.06);--shadow-hover:0 12px 36px rgba(255,143,163,.18);--radius:16px;--nav-h:64px;--max-w:1200px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans SC','Nunito',sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none;transition:color .2s}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+ul{list-style:none}
+
+/* ===== Lock Screen ===== */
+#lock-screen{position:fixed;inset:0;z-index:9999;background:var(--c-bg);display:flex;justify-content:center;align-items:center;padding:20px;transition:opacity .5s,visibility .5s}
+#lock-screen.unlocked{opacity:0;visibility:hidden;pointer-events:none}
+.lock-card{background:#fff;border-radius:24px;padding:48px 40px;text-align:center;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(255,183,197,.25);position:relative;overflow:hidden}
+.lock-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--c-primary),var(--c-accent),var(--c-sky))}
+.lock-icon{font-size:48px;margin-bottom:12px;display:inline-block;animation:lbounce 2s ease-in-out infinite}
+@keyframes lbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.lock-card h2{font-size:24px;font-weight:800;background:linear-gradient(135deg,var(--c-primary),var(--c-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.lock-card .sub{color:var(--c-sub);font-size:13px;margin-bottom:28px}
+.lock-input{width:100%;padding:14px 18px;border:2px solid #f0e6ef;border-radius:12px;font-size:17px;text-align:center;letter-spacing:5px;outline:none;background:#fefbfd;color:var(--c-text);transition:.3s;font-family:inherit}
+.lock-input:focus{border-color:var(--c-primary-light);box-shadow:0 0 0 4px rgba(255,183,197,.15)}
+.lock-input.shake{animation:ishake .4s ease;border-color:#ff6b6b;background:#fff5f5}
+@keyframes ishake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+.lock-btn{width:100%;margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(135deg,var(--c-primary),var(--c-accent));color:#fff;font-size:16px;font-weight:700;letter-spacing:2px;transition:.3s}
+.lock-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,143,163,.35)}
+.lock-err{min-height:22px;margin-top:12px;font-size:13px;font-weight:600;color:#ff6b6b;opacity:0;transition:.3s}
+.lock-err.show{opacity:1}
+
+/* ===== App Container ===== */
+#app{display:none}
+#app.visible{display:block;animation:fadeUp .6s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== Navbar ===== */
+.navbar{position:sticky;top:0;z-index:100;background:rgba(255,250,245,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--c-border);height:var(--nav-h)}
+.nav-inner{max-width:var(--max-w);margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.logo{font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--c-primary),var(--c-accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap;cursor:pointer}
+.nav-links{display:flex;gap:6px}
+.nav-links a{padding:8px 16px;border-radius:10px;font-size:14px;font-weight:600;color:var(--c-text);transition:.2s}
+.nav-links a:hover,.nav-links a.active{background:var(--c-primary-light);color:#fff}
+.search-box{position:relative;flex-shrink:0}
+.search-box input{padding:8px 14px 8px 36px;border:1.5px solid var(--c-border);border-radius:10px;font-size:13px;width:180px;outline:none;background:#fff;transition:.3s;font-family:inherit}
+.search-box input:focus{border-color:var(--c-primary-light);width:220px}
+.search-box::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px}
+.hamburger{display:none;font-size:24px;padding:4px}
+.role-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0}
+.role-user{background:#e8f5e9;color:#4caf50}
+.role-admin{background:#fff3e0;color:#ff9800}
+
+/* ===== Hero ===== */
+.hero{max-width:var(--max-w);margin:0 auto;padding:32px 24px 0}
+.hero-banner{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:21/9;background:#eee}
+.hero-banner img{width:100%;height:100%;object-fit:cover}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5) 0%,transparent 60%);display:flex;align-items:flex-end;padding:32px 40px}
+.hero-text{color:#fff}
+.hero-text h2{font-size:clamp(22px,4vw,36px);font-weight:800;margin-bottom:8px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hero-text p{font-size:clamp(13px,2vw,16px);opacity:.9;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+.hero-dots{display:flex;justify-content:center;gap:8px;margin-top:16px}
+.hero-dots span{width:8px;height:8px;border-radius:50%;background:var(--c-border);cursor:pointer;transition:.3s}
+.hero-dots span.active{background:var(--c-primary);width:24px;border-radius:4px}
+
+/* ===== Category Cards ===== */
+.cat-cards{max-width:var(--max-w);margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cat-card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:16/10;cursor:pointer;transition:.3s}
+.cat-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.cat-card img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.cat-card:hover img{transform:scale(1.06)}
+.cat-card-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),transparent 70%);display:flex;align-items:flex-end;padding:24px}
+.cat-card-overlay h3{color:#fff;font-size:20px;font-weight:700}
+.cat-card-overlay span{color:rgba(255,255,255,.8);font-size:13px;margin-left:8px}
+
+/* ===== Section Title ===== */
+.section-title{max-width:var(--max-w);margin:0 auto;padding:36px 24px 16px;display:flex;align-items:center;justify-content:space-between}
+.section-title h3{font-size:22px;font-weight:800;position:relative;padding-left:16px}
+.section-title h3::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:4px;border-radius:2px;background:linear-gradient(to bottom,var(--c-primary),var(--c-accent))}
+.section-title a{font-size:13px;color:var(--c-primary);font-weight:600}
+
+/* ===== Content Grid ===== */
+.content-grid{max-width:var(--max-w);margin:0 auto;padding:0 24px 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.c-card{background:var(--c-card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:.3s;cursor:pointer;display:flex;flex-direction:column;position:relative}
+.c-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.c-card-img{aspect-ratio:16/10;overflow:hidden;position:relative}
+.c-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.c-card:hover .c-card-img img{transform:scale(1.06)}
+.c-card-cat{position:absolute;top:12px;left:12px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;backdrop-filter:blur(4px)}
+.cat-scenery{background:rgba(76,175,80,.85)}.cat-food{background:rgba(255,152,0,.85)}.cat-life{background:rgba(66,165,245,.85)}
+.c-card-body{padding:16px 18px 20px;flex:1;display:flex;flex-direction:column}
+.c-card-title{font-size:16px;font-weight:700;margin-bottom:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c-card-excerpt{font-size:13px;color:var(--c-sub);line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1}
+.c-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#bbb}
+.c-card-tags{display:flex;gap:6px;flex-wrap:wrap}
+.c-card-tags span{padding:2px 8px;background:var(--c-bg);border-radius:6px;font-size:11px;color:var(--c-sub)}
+
+/* Admin delete btn on card */
+.admin-del-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);border:none;border-radius:50%;color:#fff;font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:5;transition:.2s}
+.admin-del-btn:hover{background:#ff6b6b}
+.is-admin .admin-del-btn{display:flex}
+
+/* ===== Hot Tags ===== */
+.hot-tags{max-width:var(--max-w);margin:0 auto;padding:0 24px 48px;display:flex;flex-wrap:wrap;gap:10px}
+.hot-tag{padding:8px 18px;background:var(--c-card);border:1.5px solid var(--c-border);border-radius:20px;font-size:13px;font-weight:600;color:var(--c-text);cursor:pointer;transition:.2s}
+.hot-tag:hover{border-color:var(--c-primary-light);color:var(--c-primary);background:#fff5f7}
+
+/* ===== Sub Filter Bar ===== */
+.filter-bar{max-width:var(--max-w);margin:0 auto;padding:24px 24px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filter-btn{padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600;background:var(--c-card);border:1.5px solid var(--c-border);color:var(--c-text);transition:.2s}
+.filter-btn:hover,.filter-btn.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+
+/* ===== Detail Page ===== */
+.detail{max-width:800px;margin:0 auto;padding:32px 24px 60px}
+.detail-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--c-sub);margin-bottom:20px;cursor:pointer;transition:.2s}
+.detail-back:hover{color:var(--c-primary)}
+.detail-cat{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;margin-bottom:16px}
+.detail h1{font-size:clamp(24px,4vw,32px);font-weight:900;line-height:1.4;margin-bottom:16px}
+.detail-meta{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--c-sub);margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--c-border)}
+.detail-cover{border-radius:var(--radius);overflow:hidden;margin-bottom:32px;aspect-ratio:16/9}
+.detail-cover img{width:100%;height:100%;object-fit:cover}
+.detail-content{font-size:16px;line-height:2;color:#444}
+.detail-content p{margin-bottom:20px}
+.detail-content img{border-radius:12px;margin:24px 0}
+.detail-content h3{font-size:20px;font-weight:700;margin:32px 0 16px;padding-left:14px;border-left:4px solid var(--c-primary)}
+.detail-content blockquote{background:#fff5f7;border-left:4px solid var(--c-primary-light);padding:16px 20px;border-radius:0 12px 12px 0;margin:20px 0;font-style:italic;color:#666}
+.detail-tags{display:flex;flex-wrap:wrap;gap:8px;margin:32px 0;padding-top:20px;border-top:1px solid var(--c-border)}
+.detail-tags span{padding:6px 14px;background:var(--c-bg);border-radius:8px;font-size:13px;color:var(--c-sub);cursor:pointer;transition:.2s}
+.detail-tags span:hover{color:var(--c-primary);background:#fff5f7}
+.detail-nav{display:flex;justify-content:space-between;gap:16px;margin:32px 0;padding:20px 0;border-top:1px solid var(--c-border);border-bottom:1px solid var(--c-border)}
+.detail-nav-item{flex:1;cursor:pointer;transition:.2s}
+.detail-nav-item:hover .dn-title{color:var(--c-primary)}
+.detail-nav-item.prev{text-align:left}
+.detail-nav-item.next{text-align:right}
+.dn-label{font-size:12px;color:#bbb;margin-bottom:4px}
+.dn-title{font-size:14px;font-weight:600}
+.related-section{margin-top:40px}
+.related-section h3{font-size:18px;font-weight:700;margin-bottom:20px}
+.detail-admin-bar{display:flex;gap:10px;margin-bottom:20px}
+.detail-admin-bar button{padding:8px 20px;border-radius:10px;font-size:13px;font-weight:600;transition:.2s}
+.btn-edit{background:#fff3e0;color:#ff9800;border:1.5px solid #ffe0b2}
+.btn-edit:hover{background:#ff9800;color:#fff}
+.btn-delete{background:#ffebee;color:#e53935;border:1.5px solid #ffcdd2}
+.btn-delete:hover{background:#e53935;color:#fff}
+
+/* ===== About Page ===== */
+.about{max-width:800px;margin:0 auto;padding:40px 24px 60px}
+.about-header{text-align:center;margin-bottom:40px}
+.about-avatar{width:100px;height:100px;border-radius:50%;margin:0 auto 16px;overflow:hidden;border:3px solid var(--c-primary-light)}
+.about-avatar img{width:100%;height:100%;object-fit:cover}
+.about-header h2{font-size:28px;font-weight:800;margin-bottom:8px}
+.about-header p{color:var(--c-sub);font-size:15px}
+.about-section{background:var(--c-card);border-radius:var(--radius);padding:32px;margin-bottom:20px;box-shadow:var(--shadow)}
+.about-section h3{font-size:18px;font-weight:700;margin-bottom:16px;padding-left:14px;border-left:4px solid var(--c-primary)}
+.about-section p{font-size:15px;color:#555;margin-bottom:12px;line-height:1.8}
+.contact-links{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.contact-link{padding:10px 20px;background:var(--c-bg);border-radius:10px;font-size:14px;font-weight:600;transition:.2s}
+.contact-link:hover{background:var(--c-primary-light);color:#fff}
+
+/* ===== Search Results ===== */
+.search-page{max-width:var(--max-w);margin:0 auto;padding:32px 24px 60px}
+.search-page h2{font-size:24px;font-weight:800;margin-bottom:8px}
+.search-page .result-info{color:var(--c-sub);font-size:14px;margin-bottom:24px}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:40px}
+.tag-cloud-item{padding:10px 20px;background:var(--c-card);border:1.5px solid var(--c-border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.tag-cloud-item:hover{border-color:var(--c-primary);color:var(--c-primary)}
+.tag-cloud-item .count{font-size:11px;color:#bbb;margin-left:6px}
+
+/* ===== Load More ===== */
+.load-more-wrap{text-align:center;padding:20px 0 48px}
+.load-more-btn{padding:12px 40px;border-radius:24px;background:var(--c-card);border:1.5px solid var(--c-border);font-size:14px;font-weight:600;color:var(--c-text);transition:.2s}
+.load-more-btn:hover{border-color:var(--c-primary);color:var(--c-primary)}
+
+/* ===== Footer ===== */
+.site-footer{background:#fff;border-top:1px solid var(--c-border);padding:40px 24px 32px}
+.footer-inner{max-width:var(--max-w);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px}
+.footer-col h4{font-size:15px;font-weight:700;margin-bottom:14px;color:var(--c-text)}
+.footer-col a,.footer-col p{display:block;font-size:13px;color:var(--c-sub);margin-bottom:8px;transition:.2s}
+.footer-col a:hover{color:var(--c-primary)}
+.footer-bottom{max-width:var(--max-w);margin:24px auto 0;padding-top:20px;border-top:1px solid var(--c-border);text-align:center;font-size:12px;color:#ccc}
+
+/* ===== Empty State ===== */
+.empty-state{text-align:center;padding:80px 20px;color:var(--c-sub)}
+.empty-state .icon{font-size:56px;margin-bottom:16px;opacity:.4}
+.empty-state p{font-size:16px}
+
+/* ===== Mobile Nav ===== */
+.mobile-menu{display:none;position:fixed;top:var(--nav-h);left:0;right:0;background:#fff;border-bottom:1px solid var(--c-border);padding:16px 24px;z-index:99;flex-direction:column;gap:4px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{padding:12px 16px;border-radius:10px;font-size:15px;font-weight:600}
+.mobile-menu a:hover,.mobile-menu a.active{background:var(--c-primary-light);color:#fff}
+
+/* ===== Admin Add Button (FAB) ===== */
+.fab-add{position:fixed;bottom:32px;right:32px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--c-primary),var(--c-accent));color:#fff;font-size:28px;display:none;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(255,143,163,.4);z-index:50;transition:.3s}
+.fab-add:hover{transform:scale(1.1);box-shadow:0 8px 32px rgba(255,143,163,.5)}
+.is-admin .fab-add{display:flex}
+
+/* ===== Modal ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:200;justify-content:center;align-items:flex-start;padding:40px 20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px;max-width:640px;width:100%;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal h2{font-size:22px;font-weight:800;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--c-border)}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--c-sub);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:1.5px solid var(--c-border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;transition:.2s;background:#fff;color:var(--c-text)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--c-primary-light);box-shadow:0 0 0 3px rgba(255,183,197,.12)}
+.form-group textarea{min-height:120px;resize:vertical;line-height:1.7}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--c-border)}
+.form-actions button{padding:10px 28px;border-radius:10px;font-size:14px;font-weight:600;transition:.2s}
+.btn-cancel{background:var(--c-bg);color:var(--c-sub);border:1.5px solid var(--c-border)}
+.btn-cancel:hover{background:#eee}
+.btn-save{background:linear-gradient(135deg,var(--c-primary),var(--c-accent));color:#fff}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,143,163,.3)}
+.img-preview{margin-top:8px;border-radius:10px;overflow:hidden;max-height:200px;display:none}
+.img-preview img{width:100%;height:100%;object-fit:cover}
+.img-preview.show{display:block}
+
+/* ===== Toast ===== */
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#333;color:#fff;padding:12px 28px;border-radius:10px;font-size:14px;z-index:300;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .nav-links,.search-box{display:none}
+  .hamburger{display:block}
+  .cat-cards{grid-template-columns:1fr;gap:14px}
+  .hero-banner{aspect-ratio:16/9}
+  .hero-overlay{padding:20px}
+  .content-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .footer-inner{grid-template-columns:1fr 1fr}
+  .detail-nav{flex-direction:column}
+  .form-row{grid-template-columns:1fr}
+  .modal{padding:24px}
+}
+@media(max-width:480px){
+  .content-grid{grid-template-columns:1fr}
+  .footer-inner{grid-template-columns:1fr}
+  .filter-bar{gap:6px}
+  .filter-btn{padding:6px 14px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- Lock Screen -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <div class="lock-icon">🔐</div>
+    <h2>拾光集</h2>
+    <p class="sub">请输入密码访问</p>
+    <input type="password" class="lock-input" id="pwd-input" placeholder="请输入密码" maxlength="20">
+    <button class="lock-btn" id="login-btn">✨ 进入</button>
+    <div class="lock-err" id="pwd-error">❌ 密码错误，请重新输入</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="logo" onclick="navigate('home')">🌿 拾光集</div>
+      <div class="nav-links" id="nav-links"></div>
+      <div class="search-box"><input type="text" placeholder="搜索内容..." id="search-input" onkeyup="if(event.key==='Enter')doSearch()"></div>
+      <span class="role-badge" id="role-badge"></span>
+      <button class="hamburger" onclick="toggleMobile()">☰</button>
+    </div>
+  </nav>
+  <div class="mobile-menu" id="mobile-menu"></div>
+  <main id="page-container"></main>
+  <button class="fab-add" onclick="openAddModal()" title="添加新内容">＋</button>
+  <button class="fab-reset" id="fab-reset" onclick="resetAllData()" title="重置所有数据" style="display:none;position:fixed;bottom:100px;right:32px;width:48px;height:48px;border-radius:50%;background:#ff6b6b;color:#fff;font-size:20px;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(255,107,107,.4);z-index:50;border:none;cursor:pointer">🔄</button>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-col"><h4>关于拾光集</h4><p>记录生活中的风景、美食与点滴感悟。</p><p>用镜头和文字，收藏每一段值得铭记的时光。</p></div>
+      <div class="footer-col"><h4>快速导航</h4><a href="javascript:void(0)" onclick="navigate('category','scenery')">风景</a><a href="javascript:void(0)" onclick="navigate('category','food')">美食</a><a href="javascript:void(0)" onclick="navigate('category','life')">生活</a><a href="javascript:void(0)" onclick="navigate('about')">关于</a></div>
+      <div class="footer-col"><h4>联系方式</h4><p>📧 hello@shiguangji.com</p><p>📷 Instagram: @shiguangji</p><p>💬 微信: shiguangji_2024</p></div>
+      <div class="footer-col"><h4>友情链接</h4><a href="#">摄影爱好者社区</a><a href="#">美食探店日记</a><a href="#">旅行灵感站</a></div>
+    </div>
+    <div class="footer-bottom">© 2024 拾光集 · All Rights Reserved</div>
+  </footer>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modal-title">添加新内容</h2>
+    <div class="form-group"><label>标题 *</label><input type="text" id="f-title" placeholder="输入文章标题"></div>
+    <div class="form-row">
+      <div class="form-group"><label>一级分类 *</label><select id="f-cat" onchange="updateSubOptions()"><option value="scenery">风景</option><option value="food">美食</option><option value="life">生活</option></select></div>
+      <div class="form-group"><label>二级分类</label><select id="f-sub"></select></div>
+    </div>
+    <div class="form-group"><label>封面图片</label><input type="file" id="f-cover" accept="image/*" onchange="previewCover(this)"><div class="img-preview" id="cover-preview"><img id="cover-preview-img" src=""></div></div>
+    <div class="form-group"><label>摘要</label><input type="text" id="f-excerpt" placeholder="1-2句话概括内容"></div>
+    <div class="form-group"><label>正文内容（支持HTML）</label><textarea id="f-content" placeholder="在此输入正文内容..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>标签（逗号分隔）</label><input type="text" id="f-tags" placeholder="如: 旅行,风景,日落"></div>
+      <div class="form-group"><label>地点</label><input type="text" id="f-location" placeholder="如: 北京·天坛"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-save" onclick="savePost()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// DEFAULT DATA
+// =============================================
+var DEFAULT_POSTS = [
+  {id:1,title:"柠檬树下的午后时光",cat:"scenery",sub:"山川湖海",cover:"images/lemon-terrace.jpg",excerpt:"阳光透过柠檬树叶洒在石板露台上，远处江面波光粼粼...",tags:["露台","柠檬","江景","午后"],date:"2024-11-15",location:"江畔露台",season:"夏季",content:"<p>偶然发现这个藏在江边的柠檬小院，石板铺就的露台上摆着藤椅和木凳，头顶是挂满金黄柠檬的枝叶。</p><img src='images/lemon-terrace.jpg' alt='柠檬露台'><h3>偷得浮生半日闲</h3><p>远处的桥和城市天际线若隐若现，但在这里，时间仿佛慢了下来。</p><blockquote>「有些地方的美，不在于壮阔，而在于那份恰到好处的宁静。」</blockquote>"},
+  {id:2,title:"成都地道老火锅指南",cat:"food",sub:"川菜",cover:"https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&q=80",excerpt:"牛油锅底、毛肚鸭肠黄喉，一份来自成都土著的火锅秘籍...",tags:["火锅","川菜","成都","麻辣"],date:"2024-11-12",content:"<p>来成都不吃一顿老火锅，等于白来。</p><img src='https://images.unsplash.com/photo-1563245372-f21724e3856d?w=1200&q=90' alt='火锅'><h3>锅底是灵魂</h3><p>正宗成都火锅用的是纯牛油锅底，不是清油。</p><blockquote>「火锅吃的不是味道，是氛围。」</blockquote>"},
+  {id:3,title:"霍格沃茨的魔法之夜",cat:"scenery",sub:"城市风光",cover:"images/hogwarts-castle.jpg",excerpt:"当灯光秀点亮城堡的那一刻，仿佛真的穿越到了魔法世界...",tags:["城堡","灯光秀","魔法","夜景"],date:"2024-11-08",location:"主题乐园",content:"<p>夜幕降临，城堡在粉红色的灯光中苏醒，蓝色光束直射夜空。</p><img src='images/hogwarts-castle.jpg' alt='城堡灯光秀'><h3>光影交织的魔法</h3><p>尖塔在灯光映射下呈现出梦幻的粉红色，与深蓝色的夜空形成强烈对比。</p>"},
+  {id:4,title:"周末Brunch：法式吐司配莓果",cat:"food",sub:"烘焙甜品",cover:"https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=800&q=80",excerpt:"外酥内软的法式吐司，搭配新鲜莓果和枫糖浆...",tags:["Brunch","法式吐司","甜品","早餐"],date:"2024-11-05",content:"<p>周末的仪式感从一份精致的Brunch开始。</p><img src='https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=1200&q=90' alt='法式吐司'><h3>关键技巧</h3><p>吐司一定要选厚切的，最好放了一天有点干的。</p>"},
+  {id:5,title:"独居生活的100个小确幸",cat:"life",sub:"日常随笔",cover:"https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80",excerpt:"一个人住第三年，我学会了和自己好好相处...",tags:["独居","生活方式","随笔"],date:"2024-11-01",content:"<p>独居第三年，从最初的不适应到现在的享受。</p><img src='https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&q=90' alt='独居'><blockquote>「独居不是孤独，是有能力选择自己想要的生活方式。」</blockquote>"},
+  {id:6,title:"雨中天坛祈年殿",cat:"scenery",sub:"四季摄影",cover:"images/temple-of-heaven.jpg",excerpt:"细雨中的祈年殿，蓝瓦金顶在灰白天空下更显庄严肃穆...",tags:["天坛","祈年殿","北京","古建筑","雨天"],date:"2024-10-28",location:"北京·天坛",season:"春季",content:"<p>大多数人都选择在晴天游览天坛，但我偏偏爱上了雨天里的祈年殿。</p><img src='images/temple-of-heaven.jpg' alt='天坛'><h3>雨中的古韵</h3><p>细密的雨丝为三层蓝琉璃瓦蒙上一层薄纱。</p><blockquote>「古建筑在雨中才有灵魂。」</blockquote>"},
+  {id:7,title:"手工意面的正确打开方式",cat:"food",sub:"西餐料理",cover:"https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=800&q=80",excerpt:"从零开始做手工意面，比想象中简单...",tags:["意面","西餐","手工","料理"],date:"2024-10-25",content:"<p>自从学会做手工意面，就再也回不去干面了。</p><img src='https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=1200&q=90' alt='意面'><h3>面团的比例</h3><p>经典比例是100g面粉配1个鸡蛋。</p>"},
+  {id:8,title:"大雁塔前的玄奘法师",cat:"scenery",sub:"旅行攻略",cover:"images/giant-pagoda-monk.jpg",excerpt:"千年古塔下，玄奘法师的铜像静静矗立...",tags:["大雁塔","西安","玄奘","古塔","历史"],date:"2024-10-20",location:"西安·大雁塔",content:"<p>站在大雁塔前，仰望这座历经千年的古塔。</p><img src='images/giant-pagoda-monk.jpg' alt='大雁塔'><h3>千年守望</h3><p>七层砖塔在蓝天下巍峨挺立。</p>"},
+  {id:9,title:"养了一只猫之后的变化",cat:"life",sub:"宠物日常",cover:"https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80",excerpt:"它改变了我的作息、我的消费观、甚至我对爱的理解...",tags:["猫咪","宠物","生活","治愈"],date:"2024-10-15",content:"<p>去年冬天领养了一只橘猫，取名年糕。</p><img src='https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&q=90' alt='猫咪'><blockquote>「养猫之后才明白，爱不是占有，是被需要。」</blockquote>"},
+  {id:10,title:"大雁塔与佛像的对话",cat:"scenery",sub:"山川湖海",cover:"images/giant-pagoda-buddha.jpg",excerpt:"翠绿的松柏间，一尊佛像静坐莲台，身后大雁塔若隐若现...",tags:["大雁塔","佛像","西安","禅意","园林"],date:"2024-10-10",location:"西安·大慈恩寺",content:"<p>在大慈恩寺的花园里，我发现了这个绝妙的构图。</p><img src='images/giant-pagoda-buddha.jpg' alt='佛像与大雁塔'><h3>禅意空间</h3><p>佛像结跏趺坐于莲花座上，手指轻拈，神态安详。</p>"},
+  {id:11,title:"居家咖啡入门手册",cat:"food",sub:"饮品调制",cover:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80",excerpt:"从速溶到手冲，一个咖啡小白的进阶之路...",tags:["咖啡","手冲","居家","入门"],date:"2024-10-05",content:"<p>三年前我还是一个只喝速溶的人。</p><img src='https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=90' alt='咖啡'><h3>入门装备清单</h3><p>手冲壶、V60滤杯、滤纸、电子秤、磨豆机。</p>"},
+  {id:12,title:"整理收纳：断舍离实践记",cat:"life",sub:"生活技巧",cover:"https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800&q=80",excerpt:"花了一个月时间整理了整个家，扔掉了三分之二的东西...",tags:["收纳","断舍离","整理","极简"],date:"2024-09-28",content:"<p>搬家三年，家里堆积了太多不需要的东西。</p><img src='https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1200&q=90' alt='收纳'><h3>我的断舍离原则</h3><p>一年内没用过的东西，大概率以后也不会用。</p>"},
+  {id:13,title:"广仁寺的五彩经幡",cat:"scenery",sub:"旅行攻略",cover:"images/prayer-flags.jpg",excerpt:"成千上万面五彩经幡从中央的松树向四周辐射展开...",tags:["经幡","广仁寺","西安","藏传佛教","色彩"],date:"2024-09-20",location:"西安·广仁寺",content:"<p>走进广仁寺的那一刻，我被头顶的景象震撼了。</p><img src='images/prayer-flags.jpg' alt='经幡'><h3>信仰的色彩</h3><p>蓝、白、红、绿、黄五色经幡分别象征天空、白云、火焰、绿水和大地。</p>"},
+  {id:14,title:"莲花池中的锦鲤",cat:"scenery",sub:"四季摄影",cover:"images/lotus-koi-pond.jpg",excerpt:"石雕莲花喷泉中央，锦鲤在涟漪中游弋...",tags:["锦鲤","莲花","池塘","寺庙","禅意"],date:"2024-09-15",location:"古寺庭院",content:"<p>古寺庭院中的一方石池，中央立着一朵精美的石雕莲花。</p><img src='images/lotus-koi-pond.jpg' alt='锦鲤池'><h3>动静之间</h3><p>几尾锦鲤在深色的池水中悠然游动。</p>"},
+  {id:15,title:"翠竹深处的古亭",cat:"scenery",sub:"山川湖海",cover:"images/forest-pavilion.jpg",excerpt:"茂密的绿荫中，一座覆满青苔的古亭静立池畔...",tags:["竹林","古亭","园林","绿意","幽静"],date:"2024-09-08",location:"山中园林",content:"<p>沿着山间小路走了许久，眼前突然出现一片浓密的绿荫。</p><img src='images/forest-pavilion.jpg' alt='古亭'><h3>绿意的层次</h3><p>亭顶覆满了青苔，与周围的翠绿融为一体。</p><blockquote>「最好的园林，是让人忘记园林的存在。」</blockquote>"},
+  {id:16,title:"天梯：通往云端的路",cat:"scenery",sub:"旅行攻略",cover:"images/heavenly-stairs.jpg",excerpt:"石狮守护的天梯直入云霄，两侧翠竹夹道...",tags:["天梯","登山","石阶","竹林","挑战"],date:"2024-09-01",location:"山中古道",content:"<p>两块巨石之间，一条陡峭的石阶直通山顶。</p><img src='images/heavenly-stairs.jpg' alt='天梯'><h3>攀登的意义</h3><p>石阶两侧各有一尊石狮，威严地守护着这条通往山顶的路。</p>"}
+];
+
+var CATEGORIES = [
+  {key:'scenery',label:'风景',icon:'🏔️',desc:'山川湖海、城市风光、四季摄影、旅行攻略',subs:['全部','山川湖海','城市风光','四季摄影','旅行攻略'],cover:'images/forest-pavilion.jpg'},
+  {key:'food',label:'美食',icon:'🍜',desc:'川菜、烘焙甜品、西餐料理、饮品调制',subs:['全部','川菜','烘焙甜品','西餐料理','饮品调制'],cover:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80'},
+  {key:'life',label:'生活',icon:'🌱',desc:'日常随笔、宠物日常、生活技巧',subs:['全部','日常随笔','宠物日常','生活技巧'],cover:'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=800&q=80'}
+];
+
+var NAV_ITEMS = [
+  {key:'home',label:'首页'},{key:'scenery',label:'风景',type:'category'},{key:'food',label:'美食',type:'category'},{key:'life',label:'生活',type:'category'},{key:'about',label:'关于'}
+];
+
+var HERO_SLIDES = [
+  {img:'images/lemon-terrace.jpg',title:'柠檬树下的午后',desc:'阳光、果香与江风，偷得浮生半日闲'},
+  {img:'images/prayer-flags.jpg',title:'五彩经幡的祈福',desc:'千面经幡如花朵绽放，每一缕风都是祝福'},
+  {img:'images/giant-pagoda-buddha.jpg',title:'古塔与佛的对话',desc:'千年时光在此刻凝固，禅意盎然'}
+];
+
+// =============================================
+// STATE & ROLE
+// =============================================
+var POSTS = [];
+var state = {page:'home',cat:null,sub:'全部',postId:null,query:'',tag:null,loadedCount:6};
+var role = 'none'; // 'user' or 'admin'
+var editingId = null;
+
+// Load posts from server API
+function loadPosts(callback){
+  fetch('/api/posts').then(function(r){return r.json()}).then(function(posts){
+    POSTS=posts||[];
+    for(var i=0;i<POSTS.length;i++){
+      if(!POSTS[i].cover||POSTS[i].cover==='')POSTS[i].cover='https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80';
+    }
+    if(callback)callback();
+  }).catch(function(e){
+    console.error('Load failed:',e);
+    POSTS=JSON.parse(JSON.stringify(DEFAULT_POSTS));
+    if(callback)callback();
+  });
+}
+
+function savePostsToStorage(){
+  // No-op: server handles persistence via individual API calls
+}
+
+// API helpers
+function apiAddPost(post, callback){
+  fetch('/api/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(post)})
+  .then(function(r){return r.json()}).then(function(saved){if(callback)callback(saved)}).catch(function(e){showToast('保存失败');if(callback)callback(null)});
+}
+
+function apiUpdatePost(id, post, callback){
+  fetch('/api/posts/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(post)})
+  .then(function(r){return r.json()}).then(function(saved){if(callback)callback(saved)}).catch(function(e){showToast('更新失败');if(callback)callback(null)});
+}
+
+function apiDeletePost(id, callback){
+  fetch('/api/posts/'+id,{method:'DELETE'})
+  .then(function(r){return r.json()}).then(function(){if(callback)callback(true)}).catch(function(e){showToast('删除失败');if(callback)callback(false)});
+}
+
+function apiReset(callback){
+  fetch('/api/reset',{method:'POST'})
+  .then(function(r){return r.json()}).then(function(){if(callback)callback()}).catch(function(e){showToast('重置失败')});
+}
+
+// =============================================
+// PASSWORD (dual role)
+// =============================================
+function verifyPwd(){
+  var inp=document.getElementById('pwd-input'),err=document.getElementById('pwd-error');
+  var val=inp.value;
+  if(val==='141533'){
+    role='user';unlockApp();
+  }else if(val==='318952'){
+    role='admin';unlockApp();
+  }else{
+    inp.classList.add('shake');err.classList.add('show');
+    setTimeout(function(){inp.classList.remove('shake')},400);
+    inp.value='';inp.focus();
+  }
+}
+
+function unlockApp(){
+  document.getElementById('pwd-error').classList.remove('show');
+  document.getElementById('lock-screen').classList.add('unlocked');
+  var app=document.getElementById('app');
+  app.classList.add('visible');
+  if(role==='admin'){app.classList.add('is-admin');document.getElementById('fab-reset').style.display='flex';}
+  var badge=document.getElementById('role-badge');
+  if(role==='admin'){badge.textContent='👑 管理员';badge.className='role-badge role-admin';}
+  else{badge.textContent='👤 访客';badge.className='role-badge role-user';}
+  loadPosts(function(){initApp()});
+}
+
+// =============================================
+// ROUTER
+// =============================================
+function navigate(page,arg,arg2){
+  state.page=page;
+  if(page==='category'){state.cat=arg;state.sub='全部';state.loadedCount=6;}
+  if(page==='detail'){state.postId=arg;}
+  if(page==='search'){state.query=arg||'';state.tag=arg2||null;}
+  window.scrollTo(0,0);renderPage();updateNav();closeMobile();
+}
+
+function initApp(){renderNav();renderPage();updateNav();}
+
+// =============================================
+// NAV
+// =============================================
+function renderNav(){
+  var nl=document.getElementById('nav-links'),mm=document.getElementById('mobile-menu'),h='';
+  for(var i=0;i<NAV_ITEMS.length;i++){
+    var n=NAV_ITEMS[i];
+    var href=n.type==='category'?"navigate('category','"+n.key+"')":"navigate('"+n.key+"')";
+    h+='<a href="javascript:void(0)" data-key="'+n.key+'" onclick="'+href+'">'+n.label+'</a>';
+  }
+  nl.innerHTML=h;mm.innerHTML=h;
+}
+
+function updateNav(){
+  var links=document.querySelectorAll('.nav-links a, .mobile-menu a');
+  for(var i=0;i<links.length;i++){
+    var k=links[i].getAttribute('data-key'),active=false;
+    if(state.page==='home'&&k==='home')active=true;
+    if(state.page==='category'&&state.cat===k)active=true;
+    if(state.page==='about'&&k==='about')active=true;
+    links[i].className=active?'active':'';
+  }
+}
+
+function toggleMobile(){document.getElementById('mobile-menu').classList.toggle('open')}
+function closeMobile(){document.getElementById('mobile-menu').classList.remove('open')}
+
+// =============================================
+// RENDER PAGE
+// =============================================
+function renderPage(){
+  var c=document.getElementById('page-container');
+  switch(state.page){
+    case 'home':c.innerHTML=renderHome();startHeroTimer();break;
+    case 'category':c.innerHTML=renderCategory();break;
+    case 'detail':c.innerHTML=renderDetail();break;
+    case 'about':c.innerHTML=renderAbout();break;
+    case 'search':c.innerHTML=renderSearch();break;
+    default:c.innerHTML=renderHome();startHeroTimer();
+  }
+}
+
+// =============================================
+// HOME PAGE
+// =============================================
+var heroIdx=0,heroTimer=null;
+function getHeroSlides(){
+  // Dynamically build hero slides from the latest post in each category
+  var slides=[];
+  for(var i=0;i<CATEGORIES.length;i++){
+    var cat=CATEGORIES[i];
+    var posts=getCatPosts(cat.key,'全部');
+    if(posts.length>0 && posts[0].cover){
+      slides.push({img:posts[0].cover,title:posts[0].title,desc:posts[0].excerpt||''});
+    }
+  }
+  // Fallback to defaults if no posts
+  if(slides.length===0) return HERO_SLIDES;
+  return slides;
+}
+function startHeroTimer(){clearInterval(heroTimer);heroIdx=0;var slides=getHeroSlides();heroTimer=setInterval(function(){heroIdx=(heroIdx+1)%slides.length;updateHero()},4000)}
+function updateHero(){
+  var slides=getHeroSlides();
+  if(heroIdx>=slides.length)heroIdx=0;
+  var s=slides[heroIdx],img=document.getElementById('hero-img'),t=document.getElementById('hero-title'),d=document.getElementById('hero-desc');
+  if(img){img.src=s.img;t.textContent=s.title;d.textContent=s.desc;}
+  var dots=document.querySelectorAll('.hero-dots span');
+  for(var i=0;i<dots.length;i++)dots[i].className=i===heroIdx?'active':'';
+}
+function goHero(i){heroIdx=i;updateHero();clearInterval(heroTimer);var slides=getHeroSlides();heroTimer=setInterval(function(){heroIdx=(heroIdx+1)%slides.length;updateHero()},4000)}
+
+function renderHome(){
+  var slides=getHeroSlides();
+  if(heroIdx>=slides.length)heroIdx=0;
+  var s=slides[heroIdx],dotsH='';
+  for(var d=0;d<slides.length;d++)dotsH+='<span class="'+(d===heroIdx?'active':'')+'" onclick="goHero('+d+')"></span>';
+
+  // Category cards - use the latest post cover from each category
+  var catH='';
+  for(var i=0;i<CATEGORIES.length;i++){
+    var c=CATEGORIES[i];
+    var catPosts=getCatPosts(c.key,'全部');
+    var catCover=catPosts.length>0?catPosts[0].cover:c.cover;
+    if(!catCover)catCover=c.cover;
+    catH+='<div class="cat-card" onclick="navigate(\'category\',\''+c.key+'\')"><img src="'+catCover+'" alt="'+c.label+'" onerror="this.src=\''+c.cover+'\'"><div class="cat-card-overlay"><h3>'+c.icon+' '+c.label+'</h3><span>'+catPosts.length+'篇</span></div></div>';
+  }
+
+  // Per-category sections: each category shows its latest 4 posts
+  var catSections='';
+  for(var j=0;j<CATEGORIES.length;j++){
+    var cat=CATEGORIES[j];
+    var posts=getCatPosts(cat.key,'全部').slice(0,4);
+    if(posts.length>0){
+      catSections+='<div class="section-title"><h3>'+cat.icon+' '+cat.label+' · 最新</h3><a href="javascript:void(0)" onclick="navigate(\'category\',\''+cat.key+'\')">查看全部 →</a></div>';
+      catSections+='<div class="content-grid">'+renderCardGrid(posts)+'</div>';
+    }
+  }
+
+  var tagsH=renderHotTags();
+  return '<div class="hero"><div class="hero-banner"><img id="hero-img" src="'+s.img+'" alt="hero"><div class="hero-overlay"><div class="hero-text"><h2 id="hero-title">'+s.title+'</h2><p id="hero-desc">'+s.desc+'</p></div></div></div><div class="hero-dots">'+dotsH+'</div></div>'
+    +'<div class="cat-cards">'+catH+'</div>'
+    +catSections
+    +'<div class="section-title"><h3>热门标签</h3></div><div class="hot-tags">'+tagsH+'</div>';
+}
+
+// =============================================
+// CATEGORY PAGE
+// =============================================
+function renderCategory(){
+  var catObj=getCat(state.cat);
+  if(!catObj)return '<div class="empty-state"><div class="icon">🔍</div><p>分类不存在</p></div>';
+  var filterH='<div class="filter-bar">';
+  for(var i=0;i<catObj.subs.length;i++){var sub=catObj.subs[i],active=state.sub===sub?' active':'';filterH+='<button class="filter-btn'+active+'" onclick="filterSub(\''+sub+'\')">'+sub+'</button>';}
+  filterH+='</div>';
+  var posts=getCatPosts(state.cat,state.sub),display=posts.slice(0,state.loadedCount);
+  var gridH=display.length?renderCardGrid(display):'<div class="empty-state"><div class="icon">📭</div><p>暂无内容</p></div>';
+  var moreH=display.length<posts.length?'<div class="load-more-wrap"><button class="load-more-btn" onclick="loadMore()">加载更多</button></div>':'';
+  return '<div class="section-title"><h3>'+catObj.icon+' '+catObj.label+'</h3></div>'
+    +'<p style="max-width:var(--max-w);margin:0 auto;padding:0 24px 8px;color:var(--c-sub);font-size:14px">'+catObj.desc+'</p>'
+    +filterH+'<div class="content-grid" style="margin-top:20px">'+gridH+'</div>'+moreH;
+}
+function filterSub(sub){state.sub=sub;state.loadedCount=6;renderPage()}
+function loadMore(){state.loadedCount+=6;renderPage()}
+
+// =============================================
+// DETAIL PAGE
+// =============================================
+function renderDetail(){
+  var post=getPost(state.postId);
+  if(!post)return '<div class="empty-state"><div class="icon">🔍</div><p>内容不存在</p></div>';
+  var catObj=getCat(post.cat),catClass='cat-'+post.cat,meta=post.date;
+  if(post.location)meta+=' · 📍 '+post.location;
+  if(post.season)meta+=' · 🍂 '+post.season;
+  var adminBar='';
+  if(role==='admin'){
+    adminBar='<div class="detail-admin-bar"><button class="btn-edit" onclick="openEditModal('+post.id+')">✏️ 编辑</button><button class="btn-delete" onclick="deletePost('+post.id+')">🗑️ 删除</button></div>';
+  }
+  var tagsH='';for(var t=0;t<post.tags.length;t++)tagsH+='<span onclick="navigate(\'search\',null,\''+post.tags[t]+'\')">#'+post.tags[t]+'</span>';
+  var navPosts=getAdjacentPosts(post.id),navH='<div class="detail-nav">';
+  if(navPosts.prev)navH+='<div class="detail-nav-item prev" onclick="navigate(\'detail\','+navPosts.prev.id+')"><div class="dn-label">← 上一篇</div><div class="dn-title">'+navPosts.prev.title+'</div></div>';else navH+='<div></div>';
+  if(navPosts.next)navH+='<div class="detail-nav-item next" onclick="navigate(\'detail\','+navPosts.next.id+')"><div class="dn-label">下一篇 →</div><div class="dn-title">'+navPosts.next.title+'</div></div>';
+  navH+='</div>';
+  var related=getRelatedPosts(post).slice(0,3),relH='';
+  if(related.length)relH='<div class="related-section"><h3>相关推荐</h3><div class="content-grid">'+renderCardGrid(related)+'</div></div>';
+  return '<div class="detail">'+adminBar
+    +'<div class="detail-back" onclick="navigate(state.cat?\'category\':\'home\',state.cat)">← 返回列表</div>'
+    +'<span class="detail-cat '+catClass+'">'+(catObj?catObj.label:'')+(post.sub&&post.sub!=='全部'?' · '+post.sub:'')+'</span>'
+    +'<h1>'+post.title+'</h1><div class="detail-meta">'+meta+'</div>'
+    +'<div class="detail-cover"><img src="'+(post.cover||'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80')+'" alt="'+post.title+'" onerror="this.src=\'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80\'"></div>'
+    +'<div class="detail-content">'+post.content+'</div>'
+    +'<div class="detail-tags">'+tagsH+'</div>'+navH+relH+'</div>';
+}
+
+// =============================================
+// ABOUT PAGE
+// =============================================
+function renderAbout(){
+  return '<div class="about"><div class="about-header"><div class="about-avatar"><img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&q=80" alt="avatar"></div><h2>关于拾光集</h2><p>记录生活中的风景、美食与点滴感悟</p></div>'
+    +'<div class="about-section"><h3>🌿 网站介绍</h3><p>拾光集是一个个人内容创作站，用来收集和分享旅途中拍摄的风景照片、厨房里尝试的美食、以及日常生活中那些值得记录的温暖瞬间。</p></div>'
+    +'<div class="about-section"><h3>👤 关于作者</h3><p>一个热爱摄影、美食和写作的普通人。白天是程序员，晚上是厨房里的实验家，周末是背着相机到处跑的旅行者。</p></div>'
+    +'<div class="about-section"><h3>📬 联系方式</h3><p>欢迎通过以下方式联系我：</p><div class="contact-links"><a class="contact-link" href="#">📧 hello@shiguangji.com</a><a class="contact-link" href="#">📷 Instagram</a><a class="contact-link" href="#">💬 微信公众号</a></div></div></div>';
+}
+
+// =============================================
+// SEARCH / TAG PAGE
+// =============================================
+function doSearch(){var q=document.getElementById('search-input').value.trim();if(q)navigate('search',q);}
+
+function renderSearch(){
+  var results=[];
+  if(state.tag){results=getPostsByTag(state.tag);}
+  else if(state.query){results=getPostsByQuery(state.query);}
+  else{
+    var allTags=getAllTags(),cloudH='';
+    for(var i=0;i<allTags.length;i++)cloudH+='<div class="tag-cloud-item" onclick="navigate(\'search\',null,\''+allTags[i].tag+'\')">#'+allTags[i].tag+'<span class="count">'+allTags[i].count+'</span></div>';
+    return '<div class="search-page"><h2>🏷️ 标签云</h2><p class="result-info">点击标签查看相关内容</p><div class="tag-cloud">'+cloudH+'</div><div class="section-title"><h3>全部内容</h3></div><div class="content-grid">'+renderCardGrid(getSortedPosts())+'</div></div>';
+  }
+  var title=state.tag?'标签: #'+state.tag:'搜索: "'+state.query+'"',info='找到 '+results.length+' 条结果';
+  var gridH=results.length?renderCardGrid(results):'<div class="empty-state"><div class="icon">🔍</div><p>没有找到相关内容</p></div>';
+  return '<div class="search-page"><h2>'+title+'</h2><p class="result-info">'+info+'</p>'+gridH+'</div>';
+}
+
+// =============================================
+// ADMIN: ADD / EDIT / DELETE
+// =============================================
+function openAddModal(){
+  editingId=null;
+  document.getElementById('modal-title').textContent='添加新内容';
+  document.getElementById('f-title').value='';
+  document.getElementById('f-cat').value='scenery';
+  updateSubOptions();
+  document.getElementById('f-sub').value='全部';
+  document.getElementById('f-cover').value='';
+  document.getElementById('cover-preview').classList.remove('show');
+  document.getElementById('f-excerpt').value='';
+  document.getElementById('f-content').value='';
+  document.getElementById('f-tags').value='';
+  document.getElementById('f-location').value='';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openEditModal(id){
+  var post=getPost(id);if(!post)return;
+  editingId=id;
+  document.getElementById('modal-title').textContent='编辑内容';
+  document.getElementById('f-title').value=post.title;
+  document.getElementById('f-cat').value=post.cat;
+  updateSubOptions();
+  document.getElementById('f-sub').value=post.sub||'全部';
+  document.getElementById('f-cover').value='';
+  if(post.cover){
+    document.getElementById('cover-preview-img').src=post.cover;
+    document.getElementById('cover-preview').classList.add('show');
+  }else{document.getElementById('cover-preview').classList.remove('show');}
+  document.getElementById('f-excerpt').value=post.excerpt||'';
+  document.getElementById('f-content').value=post.content?post.content.replace(/<[^>]*>/g,''):'';
+  document.getElementById('f-tags').value=post.tags?post.tags.join(', '):'';
+  document.getElementById('f-location').value=post.location||'';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');editingId=null;}
+
+function updateSubOptions(){
+  var catKey=document.getElementById('f-cat').value,catObj=getCat(catKey),sel=document.getElementById('f-sub');
+  sel.innerHTML='';
+  if(catObj){for(var i=0;i<catObj.subs.length;i++){var o=document.createElement('option');o.value=catObj.subs[i];o.textContent=catObj.subs[i];sel.appendChild(o);}}
+}
+
+function previewCover(input){
+  var prev=document.getElementById('cover-preview'),img=document.getElementById('cover-preview-img');
+  if(input.files&&input.files[0]){
+    compressImage(input.files[0], 400, 0.7, function(dataUrl){
+      img.src=dataUrl;prev.classList.add('show');
+    });
+  }else{prev.classList.remove('show');}
+}
+
+// Compress image using Canvas: maxWidth in px, quality 0-1
+function compressImage(file, maxWidth, quality, callback){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var w=img.width, h=img.height;
+      if(w>maxWidth){h=Math.round(h*maxWidth/w);w=maxWidth;}
+      var canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      var dataUrl=canvas.toDataURL('image/jpeg',quality);
+      callback(dataUrl);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePost(){
+  var title=document.getElementById('f-title').value.trim();
+  if(!title){showToast('请输入标题');return;}
+  var cat=document.getElementById('f-cat').value;
+  var sub=document.getElementById('f-sub').value;
+  var excerpt=document.getElementById('f-excerpt').value.trim();
+  var contentRaw=document.getElementById('f-content').value.trim();
+  var tagsStr=document.getElementById('f-tags').value.trim();
+  var location=document.getElementById('f-location').value.trim();
+  var tags=tagsStr?tagsStr.split(/[,，]/).map(function(t){return t.trim()}).filter(Boolean):[];
+  var content='<p>'+contentRaw.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>';
+  var coverFile=document.getElementById('f-cover').files[0];
+
+  function doSave(postData, isEdit){
+    if(isEdit){
+      apiUpdatePost(editingId, postData, function(saved){
+        if(saved){closeModal();loadPosts(function(){renderPage();showToast('已更新')})}
+      });
+    }else{
+      apiAddPost(postData, function(saved){
+        if(saved){closeModal();loadPosts(function(){renderPage();showToast('已添加')})}
+      });
+    }
+  }
+
+  if(editingId){
+    var post=getPost(editingId);
+    if(post){
+      var updateData={title:title,cat:cat,sub:sub,excerpt:excerpt,content:content,tags:tags,location:location};
+      if(coverFile){
+        compressImage(coverFile, 1600, 0.85, function(dataUrl){
+          updateData.cover=dataUrl;doSave(updateData,true);
+        });
+      }else{doSave(updateData,true);}
+    }
+  }else{
+    var newPost={title:title,cat:cat,sub:sub,cover:'',excerpt:excerpt||title,content:content,tags:tags,date:new Date().toISOString().slice(0,10),location:location};
+    if(coverFile){
+      compressImage(coverFile, 1600, 0.85, function(dataUrl){
+        newPost.cover=dataUrl;doSave(newPost,false);
+      });
+    }else{doSave(newPost,false);}
+  }
+}
+
+function deletePost(id){
+  var post=getPost(id);if(!post)return;
+  if(!confirm('确定要删除「'+post.title+'」吗？'))return;
+  apiDeletePost(id, function(ok){
+    if(ok){showToast('已删除');loadPosts(function(){navigate(state.cat?'category':'home',state.cat)})}
+  });
+}
+
+// =============================================
+// HELPERS
+// =============================================
+function getCat(key){for(var i=0;i<CATEGORIES.length;i++)if(CATEGORIES[i].key===key)return CATEGORIES[i];return null}
+function getPost(id){for(var i=0;i<POSTS.length;i++)if(POSTS[i].id===id)return POSTS[i];return null}
+function getCatCount(key){var c=0;for(var i=0;i<POSTS.length;i++)if(POSTS[i].cat===key)c++;return c}
+function getSortedPosts(){return POSTS.slice().sort(function(a,b){return b.date.localeCompare(a.date)})}
+function getCatPosts(cat,sub){var r=[],all=getSortedPosts();for(var i=0;i<all.length;i++){if(all[i].cat===cat&&(sub==='全部'||all[i].sub===sub))r.push(all[i])}return r}
+function getAdjacentPosts(id){var sorted=getSortedPosts(),idx=-1;for(var i=0;i<sorted.length;i++)if(sorted[i].id===id){idx=i;break}return{prev:idx<sorted.length-1?sorted[idx+1]:null,next:idx>0?sorted[idx-1]:null}}
+function getRelatedPosts(post){var r=[],sorted=getSortedPosts();for(var i=0;i<sorted.length;i++){if(sorted[i].id!==post.id&&sorted[i].cat===post.cat)r.push(sorted[i]);if(r.length>=3)break}return r}
+function getPostsByTag(tag){var r=[];for(var i=0;i<POSTS.length;i++){if(POSTS[i].tags.indexOf(tag)!==-1)r.push(POSTS[i])}return r.sort(function(a,b){return b.date.localeCompare(a.date)})}
+function getPostsByQuery(q){var ql=q.toLowerCase(),r=[];for(var i=0;i<POSTS.length;i++){var p=POSTS[i];if(p.title.toLowerCase().indexOf(ql)!==-1||p.excerpt.toLowerCase().indexOf(ql)!==-1||p.tags.join(' ').toLowerCase().indexOf(ql)!==-1||(p.content&&p.content.toLowerCase().indexOf(ql)!==-1))r.push(p)}return r.sort(function(a,b){return b.date.localeCompare(a.date)})}
+function getAllTags(){var map={};for(var i=0;i<POSTS.length;i++){for(var j=0;j<POSTS[i].tags.length;j++){var t=POSTS[i].tags[j];map[t]=(map[t]||0)+1}}var arr=[];for(var k in map)arr.push({tag:k,count:map[k]});return arr.sort(function(a,b){return b.count-a.count})}
+
+function renderCardGrid(posts){
+  var h='',isAdmin=role==='admin';
+  var placeholder='https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80';
+  for(var i=0;i<posts.length;i++){
+    var p=posts[i],catClass='cat-'+p.cat,catLabel=getCat(p.cat)?getCat(p.cat).label:p.cat;
+    var coverSrc=p.cover||placeholder;
+    var tagsH='';for(var t=0;t<Math.min(p.tags.length,3);t++)tagsH+='<span>#'+p.tags[t]+'</span>';
+    var delBtn=isAdmin?'<button class="admin-del-btn" onclick="event.stopPropagation();deletePost('+p.id+')" title="删除">✕</button>':'';
+    h+='<div class="c-card" onclick="navigate(\'detail\','+p.id+')">'+delBtn
+      +'<div class="c-card-img"><img src="'+coverSrc+'" alt="'+p.title+'" loading="lazy" onerror="this.src=\''+placeholder+'\'"><span class="c-card-cat '+catClass+'">'+catLabel+'</span></div>'
+      +'<div class="c-card-body"><div class="c-card-title">'+p.title+'</div><div class="c-card-excerpt">'+(p.excerpt||'')+'</div><div class="c-card-meta"><div class="c-card-tags">'+tagsH+'</div><span>'+p.date+'</span></div></div></div>';
+  }
+  return h;
+}
+
+function renderHotTags(){
+  var tags=getAllTags().slice(0,12),h='';
+  for(var i=0;i<tags.length;i++)h+='<span class="hot-tag" onclick="navigate(\'search\',null,\''+tags[i].tag+'\')">#'+tags[i].tag+'</span>';
+  return h;
+}
+
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+function resetAllData(){
+  if(!confirm('确定要重置所有数据吗？这将删除所有添加的内容，恢复为默认状态。'))return;
+  apiReset(function(){loadPosts(function(){showToast('已重置为默认数据');navigate('home')})});
+}
+
+// =============================================
+// EVENT BINDINGS (safe, no inline handlers for login)
+// =============================================
+document.getElementById('login-btn').addEventListener('click', verifyPwd);
+document.getElementById('pwd-input').addEventListener('keyup', function(e){if(e.key==='Enter')verifyPwd()});
+</script>
+</body>
+</html>
